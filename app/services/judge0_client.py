@@ -1,10 +1,12 @@
 import requests
-import os
+import os, time, logging
 from dotenv import load_dotenv
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 load_dotenv()
 
-JUDGE0_URL = "https://judge0-ce.p.rapidapi.com/submissions"
+log = logging.getLogger("judge0")
+JUDGE0_URL = "https://judge0-ce.p.rapidapi.com"
 RAPIDAPI_KEY = os.getenv("x-rapidapi-key")
 
 
@@ -14,7 +16,10 @@ HEADERS = {
     "X-RapidAPI-Key": RAPIDAPI_KEY
 }
 
-def execute_code(src_code: str, language_id: int, stdin: str = ""):
+SUBMIT_URL = JUDGE0_URL.rstrip("/") + "/submissions?base64_encoded=false&wait=true"
+
+@retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
+def execute_code(src_code: str, language_id: int, stdin: str = "", expected_output: str = "") -> dict:
     """
     Submits code to Judge0 and fetches the result.
     """
@@ -24,7 +29,8 @@ def execute_code(src_code: str, language_id: int, stdin: str = ""):
         "stdin": stdin
     }
 
-    res = requests.post(JUDGE0_URL + "?base64_encoded=false&wait=true", json=payload, headers=HEADERS)
+    res = requests.post(SUBMIT_URL, json=payload, headers=HEADERS)
+    res.raise_for_status()
 
     try:
         result = res.json()
@@ -34,4 +40,4 @@ def execute_code(src_code: str, language_id: int, stdin: str = ""):
     if res.status_code not in [200, 201]:
         return {"error": "Submission failed", "details": result}
     
-    return res.json()
+    return result
