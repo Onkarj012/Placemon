@@ -1,5 +1,5 @@
 #!/bin/sh
-'''exec' "/Users/onkarj012/Projects/Agentic AI/placement-prep-ai/backent/venv/bin/python3" "$0" "$@"
+'''exec' "/Users/onkarj012/Projects/Agentic AI/placement-prep-ai/backend/venv/bin/python3.13" "$0" "$@"
 ' '''
 import sys
 from httpx import main
